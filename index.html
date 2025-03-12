@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Handwritten A4 Generator</title>
+  <!-- Bootstrap CSS -->
+  <link
+    rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
+  <!-- Google Fonts for handwritten styles -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Amatic+SC&family=Dancing+Script&family=Handlee&family=Patrick+Hand&family=Shadows+Into+Light&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      position: relative;
+      min-height: 100vh;
+      background-color: #f8f9fa;
+      padding-bottom: 50px;
+    }
+    /* Global on-screen watermark (optional) */
+    #watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      opacity: 0.3;
+      font-size: 24px;
+      z-index: 9999;
+    }
+    /* A4 page styling */
+    .a4-page {
+      background-color: #fff;
+      width: 210mm;
+      height: 297mm;
+      padding: 20mm;
+      margin: 20px auto;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      border: 1px solid #ccc;
+      overflow: auto;
+      position: relative;
+    }
+    /* Centered watermark for PDF export */
+    .pdf-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 72px;
+      opacity: 0.1;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    @media screen and (max-width: 768px) {
+      .a4-page {
+        width: 95%;
+        height: auto;
+        padding: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Optional on-screen watermark -->
+  <div id="watermark">Azeem</div>
+  
+  <div class="container mt-5">
+    <h1 class="mb-4 text-center">Handwritten A4 Generator</h1>
+    
+    <!-- Input Section -->
+    <div class="form-group">
+      <label for="inputText">Enter your text:</label>
+      <textarea
+        class="form-control"
+        id="inputText"
+        rows="5"
+        placeholder="Type your text here..."
+      ></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="fontSelect">Choose Handwritten Font:</label>
+      <select class="form-control" id="fontSelect">
+        <option value="Handlee, cursive">Handlee</option>
+        <option value="'Shadows Into Light', cursive">Shadows Into Light</option>
+        <option value="Comic Sans MS, cursive, sans-serif">Comic Sans MS</option>
+        <option value="'Patrick Hand', cursive">Patrick Hand</option>
+        <option value="'Dancing Script', cursive">Dancing Script</option>
+        <option value="'Amatic SC', cursive">Amatic SC</option>
+      </select>
+    </div>
+    
+    <!-- Download PDF Button -->
+    <button class="btn btn-info mb-4" id="downloadPdf">Download PDF</button>
+    
+    <!-- A4 Page Preview (Updates automatically) -->
+    <div class="a4-page" id="a4Page">
+      <div id="a4Content"></div>
+      <!-- Centered watermark for PDF export -->
+      <div class="pdf-watermark" style="display: none;">Azeem</div>
+    </div>
+  </div>
+  
+  <!-- jQuery and Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
+  <script>
+    // Function to update the A4 page content with the handwritten style
+    function updateA4Content() {
+      var text = document.getElementById("inputText").value;
+      var font = document.getElementById("fontSelect").value;
+      var a4Content = document.getElementById("a4Content");
+      a4Content.style.fontFamily = font;
+      a4Content.style.whiteSpace = "pre-wrap";
+      a4Content.textContent = text;
+    }
+    
+    // Update the A4 page content on input and font change
+    document.getElementById("inputText").addEventListener("input", updateA4Content);
+    document.getElementById("fontSelect").addEventListener("change", updateA4Content);
+    
+    // Initially update in case there's pre-filled text
+    updateA4Content();
+    
+    // Download the current A4 page as a PDF preserving the handwritten style and centered watermark
+    document.getElementById("downloadPdf").addEventListener("click", function () {
+      var a4Page = document.getElementById("a4Page");
+      // Clone the A4 page to avoid modifying the on-screen version
+      var clone = a4Page.cloneNode(true);
+      
+      // Ensure the internal centered watermark is visible in the clone
+      var pdfWatermark = clone.querySelector(".pdf-watermark");
+      pdfWatermark.style.display = "block";
+      
+      // Temporarily add the clone to the body off-screen
+      clone.style.position = "absolute";
+      clone.style.top = "-10000px";
+      document.body.appendChild(clone);
+      
+      // Use html2canvas to capture the cloned A4 page as an image
+      html2canvas(clone, { scale: 2 }).then(function(canvas) {
+        const { jsPDF } = window.jspdf;
+        var pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4"
+        });
+        
+        // Calculate dimensions for the image to cover the full A4 page
+        var imgData = canvas.toDataURL("image/png");
+        var pdfWidth = pdf.internal.pageSize.getWidth();
+        var pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("handwritten.pdf");
+        
+        // Remove the off-screen clone
+        document.body.removeChild(clone);
+      });
+    });
+  </script>
+</body>
+</html>
